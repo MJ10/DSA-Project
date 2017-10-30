@@ -20,6 +20,7 @@ class Server:
         signal.signal(signal.SIGINT, self.shutdown)  # execute shutdown method on Ctrl + C
         # create and setup TCP socket
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.config = config
         self.setup_socket(config)
 
     def setup_socket(self, config):
@@ -73,7 +74,7 @@ class Server:
         """
         while True:
             (client_socket, client_address) = self.server_socket.accept()
-            d = threading.Thread(name=self._get_clientname(client_address),
+            d = threading.Thread(name=self._get_client_name(client_address),
                                  target=self.proxy_thread,
                                  args=(client_socket, client_address))
             d.setDaemon(True)
@@ -88,3 +89,56 @@ class Server:
         """
         return "Client" + str(client_addr)
 
+    def proxy_thread(self, conn, client_addr):
+        """
+        Handles connections from browsers
+        :param conn:
+        :param client_addr:
+        :return:
+        """
+        req = conn.recv(self.config['MAX_REQUEST_LENGTH'])
+        line1 = req.split('\n')[0]
+        url = line1.split(' ')[1]
+
+        self.log("INFO", client_addr, "Request: " + line1)
+
+        http_pos = url.find('://')
+        if http_pos == -1:
+            temp = url
+        else:
+            temp = url[(http_pos + 3):]
+        port_pos = temp.find(':')
+        webserver_pos = temp.find('/')
+        if webserver_pos == -1:
+            webserver_pos = len(temp)
+
+        webserver = ""
+        port = -1
+        if port_pos == -1 or webserver_pos < port_pos:
+            port = 80
+            webserver = temp[:webserver_pos]
+        else:
+            port = int((temp[port_pos + 1:])[:webserver_pos-port_pos-1])
+            webserver = temp[:port_pos]
+
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(self.config['CONNECTION_TIMEOUT'])
+            s.connect((webserver, port))
+            s.sendall(req)
+
+            while True:
+                data = s.recv(self.config['MAX_REQUEST_LENGTH'])
+                if len(data) > 0:
+                    conn.send(data)
+                else:
+                    break
+            s.close()
+            conn.close()
+        except socket.error as error_msg:
+            self.log('ERROR', client_addr, error_msg)
+            if s:
+                s.close()
+            if conn:
+                conn.close()
+            self.log("WARNING", client_addr, "Peer Reset "+line1)
