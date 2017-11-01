@@ -57,9 +57,8 @@ class FrequencyList:
             key_node.prev=Node.children
             
         else:
-            temp1=temp.next
-            key_node.parent_node=temp1
-            self.insertNode(key_node,temp1)
+            key_node.parent_node=temp.next
+            self.insertNode(key_node,temp.next)
             
     
 
@@ -106,10 +105,12 @@ class FrequencyList:
         temp1=temp.parent_node
         if temp1.next != None:
             if temp1.value == temp1.next.value - 1:
+                self.delete_node(temp)
                 temp.parent_node=temp1.next
                 self.insertNode(temp,temp1.next)
             else:
-                temp2=self.newFrequencyNode(temp1)
+                temp2=self.new_frequency_node(temp1)
+                self.delete_node(temp)
                 temp.parent_node=temp2
                 self.insertNode(temp,temp2)
             
@@ -119,28 +120,35 @@ class FrequencyList:
             temp2.prev=temp1
             temp1.next=temp2
             temp2.value=temp1.value+1
+            self.delete_node(temp)
+            temp.parent_node=temp2
             self.insertNode(temp,temp2)
+
+    def delete_node(self,temp):
+        """
+        Deletes a node from the linked list of similar access frequencies
+        param: temp: The pointer to the node that is being deleted
+        return : None
+        """
+        temp.prev.next=temp.next
+        if temp.next != None:
+            temp.next.prev= temp.prev
+     
 
     def delete_keys(self):
         """
-        Deletes the first element of the first node in the frequency List
-        
+        Deletes the first element of the least frequently used node in the frequency List
+        return : None
         """
         if self.head.next != None:
             temp=self.head.next
             while temp.children.next == None:
-                temp=temp.next
-            temp1=temp.children
-
-            temp1.next=temp1.next.next
-            if temp1.next != None:
-                temp1.next.prev=temp1
-            else:
-                temp.prev.next=temp.next
-                if temp.next != None:
-                    temp.next.prev=temp.prev    
-               
-
+                if temp.next !=None:
+                    temp=temp.next
+                else:
+                    return
+            self.delete_node(temp.children.next)
+        
 
 
 
