@@ -1,19 +1,26 @@
+class HashNode:
+    def __init__(self):
+        self.entry = None
+
+
 class HashTable:
     def __init__(self, size=1007):
         self.MAX = size
-        self.table = [None for _ in range(size)]
+        self.table = [HashNode() for _ in range(size)]
 
-    def insert(self, key, value):
-        entry = (key, value)
-        index = self.hash(key)
-        self.table[index].insertAtIndex(entry, 0)
+    def insert(self, obj):
+        index = self.hash(obj.key)
+        obj.hash_reference = self.table[index]
+        self.table[index].entry = obj
 
     def search(self, key):
         hash_index = self.hash(key)
-        if self.table[hash_index].isEmpty():
-            return None
-        l = self.table[hash_index].search(key)
-        return l
+        if self.table[hash_index].entry:
+            return self.table[hash_index].entry
+        return None
+
+    def remove(self, obj):
+        obj.hash_reference.entry = None
 
     def hash(self, key):
         hash_code = 0
@@ -24,13 +31,11 @@ class HashTable:
         hash_code += (hash_code << 3)
         hash_code ^= (hash_code >> 11)
         hash_code += (hash_code << 15)
-        return hash_code % 1007
+        return hash_code % self.MAX
 
     def keys(self):
         keys = []
-        for row in self.table:
-            if not row.isEmpty():
-                l = row.print()
-                for val in l:
-                    keys.append(val[0])
+        for entry in self.table:
+            if entry:
+                keys.append(entry.key)
         return keys

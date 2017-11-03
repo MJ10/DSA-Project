@@ -24,6 +24,7 @@ class ListNode:
         self.next = None
         self.prev = None
         self.parent_node = None
+        self.data = None
 
 
 class FrequencyList:
@@ -45,31 +46,32 @@ class FrequencyList:
         """
         temp = self.head
         key_node = ListNode()
+        key_node.data = key
         key.parent = key_node
         if temp.next is None:
-            Node = FrequencyNode()
-            Node.value = 1
-            temp.next = Node
-            Node.prev = temp
-            key_node.parent_node = Node
-            Node.children.next = key_node
-            key_node.prev = Node.children
+            node = FrequencyNode()
+            node.value = 1
+            temp.next = node
+            node.prev = temp
+            key_node.parent_node = node
+            node.children.next = key_node
+            key_node.prev = node.children
             
         else:
             key_node.parent_node = temp.next
             self.insert_node(key_node, temp.next)
 
-    def new_frequency_node(self, Node):
+    def new_frequency_node(self, node):
         """
         Creates a new frequency node and inserts it into the Frequency List
-        :param: Node:Denotes the frequency node after which the created node is inserted
-        :return:ListNode object
+        :param: node: Denotes the frequency node after which the created node is inserted
+        :return: FrequencyNode object
         """
         temp = FrequencyNode()
-        temp.value = Node.value+1
-        temp.prev = Node
-        temp.next = Node.next
-        Node.next = temp
+        temp.value = node.value + 1
+        temp.prev = node
+        temp.next = node.next
+        node.next = temp
         temp.next.prev = temp
         return temp
   
@@ -80,7 +82,7 @@ class FrequencyList:
         :param : frequency_node : Denotes the FrequencyNode object to which the given node is added to
         :return: None
         """
-        if frequency_node.children is None:
+        if frequency_node.children.next is None:
             frequency_node.children.next = list_node
             list_node.prev = frequency_node.children
         else:
@@ -117,7 +119,11 @@ class FrequencyList:
             temp.parent_node = temp2
             self.insert_node(temp, temp2)
 
-    def delete_node(self,temp):
+        if not temp1.children:
+            temp1.prev.next = temp1.next
+            temp1.next.prev = temp1.prev
+
+    def delete_node(self, temp):
         """
         Deletes a node from the linked list of similar access frequencies
         param: temp: The pointer to the node that is being deleted
@@ -134,9 +140,13 @@ class FrequencyList:
         """
         if self.head.next:
             temp = self.head.next
-            while not temp.children.next:
-                if temp.next:
-                    temp = temp.next
-                else:
-                    return
-            self.delete_node(temp.children.next)
+            child = temp.children.next
+            if child:
+                child.prev.next = child.next
+                if child.next:
+                    child.next.prev = child.prev
+            if not self.head.next.children.next:
+                self.head.next.next.prev = self.head
+                self.head.next = self.head.next.next
+            return child.data
+        return None
