@@ -3,6 +3,7 @@ import socket
 import threading
 import signal
 from time import gmtime, strftime, localtime
+import utils
 import sys
 import logging
 
@@ -50,9 +51,9 @@ class Server:
         else:
             formatted_message = '{0}: {1} {2}'.format(client[0], client[1], msg)
 
-        logging.debug('%s', (None, log_level, formatted_message), extra=logger_dict)
+        logging.debug('%s', utils.colorize_log(log_level, formatted_message), extra=logger_dict)
 
-    def shutdown(self):
+    def shutdown(self, signum, frame):
         """
         Handles closing of the server
         :return: None
@@ -72,6 +73,8 @@ class Server:
         Listens for connections to the server
         :return: None
         """
+        print('Proxy Server started on {}:{}'.format(self.config['HOST_NAME'],
+                                                     self.config['BIND_PORT']))
         while True:
             (client_socket, client_address) = self.server_socket.accept()
             d = threading.Thread(name=self._get_client_name(client_address),
@@ -79,7 +82,7 @@ class Server:
                                  args=(client_socket, client_address))
             d.setDaemon(True)
             d.start()
-        self.shutdown()
+        self.shutdown(0,  0)
 
     def _get_client_name(self, client_addr):
         """
@@ -97,18 +100,19 @@ class Server:
         :return:
         """
         req = conn.recv(self.config['MAX_REQUEST_LENGTH'])
-        line1 = req.split('\n')[0]
-        url = line1.split(' ')[1]
+        # print(req)
+        line1 = req.split(b'\n')[0]
+        url = line1.split(b' ')[1]
 
-        self.log("INFO", client_addr, "Request: " + line1)
+        self.log("INFO", client_addr, "Request: " + str(line1))
 
-        http_pos = url.find('://')
+        http_pos = url.find(b'://')
         if http_pos == -1:
             temp = url
         else:
             temp = url[(http_pos + 3):]
-        port_pos = temp.find(':')
-        webserver_pos = temp.find('/')
+        port_pos = temp.find(b':')
+        webserver_pos = temp.find(b'/')
         if webserver_pos == -1:
             webserver_pos = len(temp)
 
@@ -141,4 +145,19 @@ class Server:
                 s.close()
             if conn:
                 conn.close()
-            self.log("WARNING", client_addr, "Peer Reset "+line1)
+            self.log("WARNING", client_addr, "Peer Reset " + str(line1))
+
+
+if __name__ == '__main__':
+    config = {
+        "HOST_NAME": "0.0.0.0",
+        "BIND_PORT": 12345,
+        "MAX_REQUEST_LENGTH": 1024,
+        "CONNECTION_TIMEOUT": 5
+    }
+
+    logging.basicConfig(level=logging.DEBUG,
+                        format='[%(CurrentTime)-10s] (%(ThreadName)-10s) %(message)s')
+
+    server = Server(config)
+    server.listen()
