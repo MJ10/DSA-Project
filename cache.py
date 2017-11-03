@@ -36,12 +36,21 @@ class LFUCache:
         self.table.insert(cache_object)
 
     def evict(self):
+        """
+        Evict least frequently used cache item
+        :return: None
+        """
         cache_obj = self.list.delete_keys()
         if cache_obj:
             self.table.remove(cache_obj)
             return self.table.hash(cache_obj.key)
 
     def retrieve(self, key):
+        """
+        Retrieve cache object with key 'key'
+        :param key:
+        :return:
+        """
         cache_obj = self.table.search(key)
         if cache_obj:
             self.list.lookup(cache_obj)
