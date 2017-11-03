@@ -1,5 +1,5 @@
 from HashTable import HashTable
-from LinkedList import FrequencyList
+from FrequencyList import FrequencyList
 
 
 class CacheObject:
