@@ -2,10 +2,12 @@
 import socket
 import threading
 import signal
-from time import gmtime, strftime, localtime
+from time import strftime, localtime
 import utils
+import re
 import sys
 import logging
+from cache import LFUCache
 
 
 class Server:
@@ -22,16 +24,18 @@ class Server:
         # create and setup TCP socket
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.config = config
-        self.setup_socket(config)
+        self.setup_socket()
+        self.regex = re.compile(r'({})$'.format('.css|.js'))
+        # initialize cache
+        self.cache = LFUCache()
 
-    def setup_socket(self, config):
+    def setup_socket(self):
         """
         Sets up the reuse of socket and binds to public host and a port
-        :param config: Server configuration
         :return: None
         """
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server_socket.bind((config['HOST_NAME'], config['BIND_PORT']))
+        self.server_socket.bind((self.config['HOST_NAME'], self.config['BIND_PORT']))
         self.server_socket.listen(10)
 
     def log(self, log_level, client, msg):
@@ -43,7 +47,7 @@ class Server:
         :return: None
         """
         logger_dict = {
-            'CurrentTime': strftime("%a, $d %b %Y %X", localtime()),
+            'CurrentTime': strftime("%a, %d %b %Y %X", localtime()),
             'ThreadName': threading.current_thread().getName()
         }
         if client == -1:
@@ -100,52 +104,103 @@ class Server:
         :return:
         """
         req = conn.recv(self.config['MAX_REQUEST_LENGTH'])
-        # print(req)
         line1 = req.split(b'\n')[0]
-        url = line1.split(b' ')[1]
-
-        self.log("INFO", client_addr, "Request: " + str(line1))
-
-        http_pos = url.find(b'://')
-        if http_pos == -1:
-            temp = url
+        x = line1.split(b' ')
+        if len(x) > 1:
+            url = x[1]
         else:
-            temp = url[(http_pos + 3):]
-        port_pos = temp.find(b':')
-        webserver_pos = temp.find(b'/')
-        if webserver_pos == -1:
-            webserver_pos = len(temp)
-
-        webserver = ""
-        port = -1
-        if port_pos == -1 or webserver_pos < port_pos:
-            port = 80
-            webserver = temp[:webserver_pos]
-        else:
-            port = int((temp[port_pos + 1:])[:webserver_pos-port_pos-1])
-            webserver = temp[:port_pos]
-
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(self.config['CONNECTION_TIMEOUT'])
-            s.connect((webserver, port))
-            s.sendall(req)
-
-            while True:
-                data = s.recv(self.config['MAX_REQUEST_LENGTH'])
-                if len(data) > 0:
-                    conn.send(data)
-                else:
-                    break
-            s.close()
-            conn.close()
-        except socket.error as error_msg:
-            self.log('ERROR', client_addr, error_msg)
-            if s:
-                s.close()
-            if conn:
+            return
+        
+        # Check if the file requested is css/js file
+        if bool(self.regex.findall(url.decode())):
+            # send cached version if present
+            if self.cache.retrieve(url.decode()):
+                print('Retrieving from cache: ' + url.decode())
+                conn.send(self.cache.retrieve(url.decode()))
                 conn.close()
-            self.log("WARNING", client_addr, "Peer Reset " + str(line1))
+            else:
+                self.log("INFO", client_addr, "Request: " + str(line1))
+
+                http_pos = url.find(b'://')
+                if http_pos == -1:
+                    temp = url
+                else:
+                    temp = url[(http_pos + 3):]
+                port_pos = temp.find(b':')
+                webserver_pos = temp.find(b'/')
+                if webserver_pos == -1:
+                    webserver_pos = len(temp)
+
+                webserver = ""
+                port = -1
+                if port_pos == -1 or webserver_pos < port_pos:
+                    port = 80
+                    webserver = temp[:webserver_pos]
+                else:
+                    port = int((temp[port_pos + 1:])[:webserver_pos-port_pos-1])
+                    webserver = temp[:port_pos]
+
+                try:
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.settimeout(self.config['CONNECTION_TIMEOUT'])
+                    s.connect((webserver, port))
+                    s.sendall(req)
+                    while True:
+                        data = s.recv(self.config['MAX_REQUEST_LENGTH'])
+                        if len(data) > 0:
+                            self.cache.add(url.decode(), data)
+                            conn.send(data)
+                        else:
+                            break
+                    s.close()
+                    conn.close()
+                except socket.error as error_msg:
+                    self.log('ERROR', client_addr, error_msg)
+                    if s:
+                        s.close()
+                    if conn:
+                        conn.close()
+                    self.log("WARNING", client_addr, "Peer Reset " + str(line1))
+        else:
+            http_pos = url.find(b'://')
+            if http_pos == -1:
+                temp = url
+            else:
+                temp = url[(http_pos + 3):]
+            port_pos = temp.find(b':')
+            webserver_pos = temp.find(b'/')
+            if webserver_pos == -1:
+                webserver_pos = len(temp)
+
+            webserver = ""
+            port = -1
+            if port_pos == -1 or webserver_pos < port_pos:
+                port = 80
+                webserver = temp[:webserver_pos]
+            else:
+                port = int((temp[port_pos + 1:])[:webserver_pos - port_pos - 1])
+                webserver = temp[:port_pos]
+
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(self.config['CONNECTION_TIMEOUT'])
+                s.connect((webserver, port))
+                s.sendall(req)
+                while True:
+                    data = s.recv(self.config['MAX_REQUEST_LENGTH'])
+                    if len(data) > 0:
+                        self.cache.add(url.decode(), data)
+                        conn.send(data)
+                    else:
+                        break
+                s.close()
+                conn.close()
+            except socket.error as error_msg:
+                if s:
+                    s.close()
+                if conn:
+                    conn.close()
+                self.log("WARNING", client_addr, "Peer Reset " + str(line1))
 
 
 if __name__ == '__main__':
@@ -153,7 +208,7 @@ if __name__ == '__main__':
         "HOST_NAME": "0.0.0.0",
         "BIND_PORT": 12345,
         "MAX_REQUEST_LENGTH": 1024,
-        "CONNECTION_TIMEOUT": 5
+        "CONNECTION_TIMEOUT": 10
     }
 
     logging.basicConfig(level=logging.DEBUG,

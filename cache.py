@@ -31,6 +31,9 @@ class LFUCache:
         :param data: Data to be cached
         :return: None
         """
+        obj_data = self.retrieve(key)
+        if obj_data:
+            data = obj_data + data
         cache_object = CacheObject(key, data)
         self.list.insert_new(cache_object)
         self.table.insert(cache_object)
@@ -60,10 +63,10 @@ class LFUCache:
 
 if __name__ == '__main__':
     cache = LFUCache()
-    cache.add("This is a test", {"sone": 24, 132: "sdsds"})
+    cache.add("http://www.republiquedesmangues.fr/Youareawesome.png", b'some dhsfjhsdjkahdkasuirer data\xdfssd\xadsa')
     cache.add("This is a tesafhkt", {"sone": 24, 132: "sdsds"})
     cache.add("This is asadas test", {"sone": 24, 132: "sdsds"})
-    print(cache.retrieve("This is a test"))
+    print(cache.retrieve("http://www.republiquedesmangues.fr/Youareawesome.png"))
     print(cache.retrieve("This is a tesafhkt"))
     x = cache.evict()
     print(cache.table.table[x].entry)
