@@ -31,6 +31,8 @@ class LFUCache:
         :param data: Data to be cached
         :return: None
         """
+        if len(self.table.table) is self.table.MAX:
+            self.evict()
         obj_data = self.retrieve(key)
         if obj_data:
             data = obj_data + data
@@ -59,14 +61,3 @@ class LFUCache:
             self.list.lookup(cache_obj)
             return cache_obj.data
         return None
-
-
-if __name__ == '__main__':
-    cache = LFUCache()
-    cache.add("http://www.republiquedesmangues.fr/Youareawesome.png", b'some dhsfjhsdjkahdkasuirer data\xdfssd\xadsa')
-    cache.add("This is a tesafhkt", {"sone": 24, 132: "sdsds"})
-    cache.add("This is asadas test", {"sone": 24, 132: "sdsds"})
-    print(cache.retrieve("http://www.republiquedesmangues.fr/Youareawesome.png"))
-    print(cache.retrieve("This is a tesafhkt"))
-    x = cache.evict()
-    print(cache.table.table[x].entry)
