@@ -2,7 +2,7 @@
 import socket
 import threading
 import signal
-from time import strftime, localtime
+from time import strftime, localtime, time
 import utils
 import re
 import sys
@@ -115,12 +115,15 @@ class Server:
         if bool(self.regex.findall(url.decode())):
             # send cached version if present
             if self.cache.retrieve(url.decode()):
-                print('Retrieving from cache: ' + url.decode())
+                time_elapsed = time()
                 conn.send(self.cache.retrieve(url.decode()))
                 conn.close()
+                time_elapsed = time() - time_elapsed
+                print('Retrieving from cache: ' + url.decode())
+                print('Time taken: {}'.format(time_elapsed))
             else:
                 self.log("INFO", client_addr, "Request: " + str(line1))
-
+                time_elapsed = time()
                 http_pos = url.find(b'://')
                 if http_pos == -1:
                     temp = url
@@ -154,6 +157,8 @@ class Server:
                             break
                     s.close()
                     conn.close()
+                    time_elapsed = time() - time_elapsed
+                    print('Time Elapsed: {}'.format(time_elapsed))
                 except socket.error as error_msg:
                     self.log('ERROR', client_addr, error_msg)
                     if s:
@@ -195,7 +200,7 @@ class Server:
                         break
                 s.close()
                 conn.close()
-            except socket.error as error_msg:
+            except socket.error:
                 if s:
                     s.close()
                 if conn:
