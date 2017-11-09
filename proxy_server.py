@@ -28,6 +28,8 @@ class Server:
         self.regex = re.compile(r'({})$'.format('.css|.js'))
         # initialize cache
         self.cache = LFUCache()
+        logging.basicConfig(level=logging.DEBUG,
+                            format='[%(CurrentTime)-10s] (%(ThreadName)-10s) %(message)s')
 
     def setup_socket(self):
         """
@@ -207,18 +209,3 @@ class Server:
                 if conn:
                     conn.close()
                 self.log("WARNING", client_addr, "Peer Reset " + str(line1))
-
-
-if __name__ == '__main__':
-    config = {
-        "HOST_NAME": "0.0.0.0",
-        "BIND_PORT": 12345,
-        "MAX_REQUEST_LENGTH": 1024,
-        "CONNECTION_TIMEOUT": 10
-    }
-
-    logging.basicConfig(level=logging.DEBUG,
-                        format='[%(CurrentTime)-10s] (%(ThreadName)-10s) %(message)s')
-
-    server = Server(config)
-    server.listen()
