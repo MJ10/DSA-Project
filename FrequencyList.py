@@ -122,7 +122,7 @@ class FrequencyList:
             temp.parent_node = temp2
             self.insert_node(temp, temp2)
 
-        if not temp1.children:
+        if not temp1.children.next:
             temp1.prev.next = temp1.next
             temp1.next.prev = temp1.prev
 
