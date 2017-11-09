@@ -14,8 +14,8 @@ This will start the proxy server on port 1337 (Can be edited in the main.py file
 
 ## Team
 * [Moksh Jain](https://github.com/MJ10), 16IT221
-* [Suyash Ghuge](https://github.com/nishanthebbar2011), 16IT114
-* [Nishanth Hebbar](https://github.com/suyash0103), 16IT234
+* [Suyash Ghuge](https://github.com/suyash0103), 16IT114
+* [Nishanth Hebbar](https://github.com/nishanthebbar2011), 16IT234
 * [Abhishek Kamal](https://github.com/abhishek371), 16IT202
 
 ## Contributing 
