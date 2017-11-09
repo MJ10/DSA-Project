@@ -31,16 +31,22 @@ class LFUCache:
         :param data: Data to be cached
         :return: None
         """
-        cache_object = CacheObject(key, data)
-        self.list.insert_new(cache_object)
-        self.table.insert(cache_object)
+        if len(self.table.table) is self.table.MAX:
+            self.evict()
+        obj_data = self.retrieve(key)
+        if obj_data:
+            obj_data.data += data
+        else:
+            cache_object = CacheObject(key, data)
+            self.list.insert_new(cache_object)
+            self.table.insert(cache_object)
 
     def evict(self):
         """
         Evict least frequently used cache item
         :return: None
         """
-        cache_obj = self.list.delete_keys()
+        cache_obj = self.list.delete_obj()
         if cache_obj:
             self.table.remove(cache_obj)
             return self.table.hash(cache_obj.key)
@@ -54,16 +60,5 @@ class LFUCache:
         cache_obj = self.table.search(key)
         if cache_obj:
             self.list.lookup(cache_obj)
-            return cache_obj.data
+            return cache_obj
         return None
-
-
-if __name__ == '__main__':
-    cache = LFUCache()
-    cache.add("This is a test", {"sone": 24, 132: "sdsds"})
-    cache.add("This is a tesafhkt", {"sone": 24, 132: "sdsds"})
-    cache.add("This is asadas test", {"sone": 24, 132: "sdsds"})
-    print(cache.retrieve("This is a test"))
-    print(cache.retrieve("This is a tesafhkt"))
-    x = cache.evict()
-    print(cache.table.table[x].entry)

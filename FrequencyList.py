@@ -38,21 +38,24 @@ class FrequencyList:
         """
         self.head = FrequencyNode()
 
-    def insert_new(self, key):
+    def insert_new(self, obj):
         """
         Insert new element into the linked list with it's access frequency = 1
-        :param key: The object key that is to be inserted into the Frequency List
+        :param obj: The object key that is to be inserted into the Frequency List
         :return: None
         """
         temp = self.head
         key_node = ListNode()
-        key_node.data = key
-        key.parent = key_node
-        if temp.next is None:
+        key_node.data = obj
+        obj.parent = key_node
+        if temp.next is None or temp.next.value is not 1:
             node = FrequencyNode()
             node.value = 1
-            temp.next = node
             node.prev = temp
+            if temp.next is not None:
+                node.next = temp.next
+                temp.next.prev = node
+            temp.next = node
             key_node.parent_node = node
             node.children.next = key_node
             key_node.prev = node.children
@@ -92,13 +95,13 @@ class FrequencyList:
             if list_node.next:
                 list_node.next.prev = list_node
 
-    def lookup(self, key):
+    def lookup(self, obj):
         """
         Frequency of the element searched for is updated and element is inserted accordingly into it's new position
         param: key : Denotes the object that is  being searched for and inserted 
         return:None
         """
-        temp = key.parent
+        temp = obj.parent
         temp1 = temp.parent_node
         if temp1.next:
             if temp1.value == temp1.next.value - 1:
@@ -133,7 +136,7 @@ class FrequencyList:
         if temp.next:
             temp.next.prev = temp.prev
 
-    def delete_keys(self):
+    def delete_obj(self):
         """
         Deletes the first element of the least frequently used node in the frequency List
         return : None
