@@ -11,7 +11,7 @@ class HashTable:
     A hash table for accessing the cache contents
     Assumed 'collision-free'
     """
-    def __init__(self, size=1007):
+    def __init__(self, size=1009):
         """
         Returns a new hash table of size 'size'
         :param size: size of the hash table
@@ -44,7 +44,7 @@ class HashTable:
         """
         Remove object from hash table
         :param obj: Cache object to be deleted
-        :return:
+        :return: None
         """
         obj.hash_reference.entry = None
 

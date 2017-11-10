@@ -18,6 +18,7 @@ class Server:
     def __init__(self, config):
         """
         Initializes a server object
+        :param config: Configuration for the proxy
         """
         self.__clients = {}  # dictionary to store all the active connections
         signal.signal(signal.SIGINT, self.shutdown)  # execute shutdown method on Ctrl + C
@@ -100,10 +101,10 @@ class Server:
 
     def proxy_thread(self, conn, client_addr):
         """
-        Handles connections from browsers
-        :param conn:
-        :param client_addr:
-        :return:
+        Handles the thread for  each connection
+        :param conn: Connection of the current client being served
+        :param client_addr: Address of the current client being served
+        :return: None
         """
         req = conn.recv(self.config['MAX_REQUEST_LENGTH'])
         line1 = req.split(b'\n')[0]

@@ -54,7 +54,7 @@ class LFUCache:
     def retrieve(self, key):
         """
         Retrieve cache object with key 'key'
-        :param key:
+        :param key: key of the data to be retrieved
         :return:
         """
         cache_obj = self.table.search(key)
