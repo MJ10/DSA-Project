@@ -87,6 +87,8 @@ class Server:
             d = threading.Thread(name=self._get_client_name(client_address),
                                  target=self.proxy_thread,
                                  args=(client_socket, client_address))
+            if self.cache.table.size >= int(self.cache.table.MAX * 0.9):
+                self.cache.evict()
             d.setDaemon(True)
             d.start()
         self.shutdown(0, 0)
@@ -167,10 +169,10 @@ class Server:
                         s.close()
                     if conn:
                         conn.close()
-                    print('Recieving from website: ' + url.decode())
-                    time_elapsed = time() - time_elapsed
-                    print('Time Elapsed: {}'.format(time_elapsed))
                     self.log("WARNING", client_addr, "Peer Reset " + str(line1))
+                print('Recieving from website: ' + url.decode())
+                time_elapsed = time() - time_elapsed
+                print('Time Elapsed: {}'.format(time_elapsed))
         else:
             http_pos = url.find(b'://')
             if http_pos == -1:

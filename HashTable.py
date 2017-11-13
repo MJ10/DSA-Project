@@ -17,6 +17,7 @@ class HashTable:
         :param size: size of the hash table
         """
         self.MAX = size
+        self.size = 0
         self.table = [HashNode() for _ in range(size)]
 
     def insert(self, obj):
@@ -28,6 +29,7 @@ class HashTable:
         index = self.hash(obj.key)
         obj.hash_reference = self.table[index]
         self.table[index].entry = obj
+        self.size += 1
 
     def search(self, key):
         """
@@ -46,6 +48,7 @@ class HashTable:
         :param obj: Cache object to be deleted
         :return: None
         """
+        self.size -= 1
         obj.hash_reference.entry = None
 
     def hash(self, key):

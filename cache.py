@@ -31,9 +31,7 @@ class LFUCache:
         :param data: Data to be cached
         :return: None
         """
-        if len(self.table.table) is self.table.MAX:
-            self.evict()
-        obj_data = self.retrieve(key)
+        obj_data = self.table.search(key)
         if obj_data:
             obj_data.data += data
         else:
@@ -49,13 +47,12 @@ class LFUCache:
         cache_obj = self.list.delete_obj()
         if cache_obj:
             self.table.remove(cache_obj)
-            return self.table.hash(cache_obj.key)
 
     def retrieve(self, key):
         """
         Retrieve cache object with key 'key'
         :param key: key of the data to be retrieved
-        :return:
+        :return: Cache object
         """
         cache_obj = self.table.search(key)
         if cache_obj:
