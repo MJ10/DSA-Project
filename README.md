@@ -12,6 +12,9 @@ python3 main.py
 This will start the proxy server on port 1337 (Can be edited in the main.py file)
 * Go to your respective browser's proxy settings and set the HTTP proxy to `localhost` on port `1337`
 
+## Presentation
+The presentation the project can be found [here](http://slides.com/mokshjain/deck/)
+
 ## Team
 * [Moksh Jain](https://github.com/MJ10), 16IT221
 * [Suyash Ghuge](https://github.com/suyash0103), 16IT114
